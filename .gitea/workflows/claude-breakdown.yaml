@@ -1,0 +1,45 @@
+name: Claude Plan Breakdown
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  breakdown:
+    if: contains(github.event.label.name, 'needs-breakdown')
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: markwylde/claude-code-gitea-action@v1.0.5
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          gitea_token: ${{ secrets.GITEA_TOKEN }}
+          claude_git_name: claude-planner
+          claude_git_email: claude@anthropic.com
+          direct_prompt: |
+            Read the issue that triggered this workflow carefully. Your job is to produce
+            a detailed implementation plan as a comment on the issue.
+
+            Structure your response as:
+
+            ## Implementation Plan
+
+            ### Steps
+            For each step, provide:
+            - **Step N: [title]** (complexity: trivial/small/medium/large)
+              - Description of what to do
+              - Files likely affected
+              - Dependencies on other steps
+
+            ### Acceptance Criteria
+            - Bullet list of testable criteria
+
+            ### Questions / Ambiguities
+            - Anything unclear that needs clarification before work begins
+
+            ### Suggested Sub-Issues
+            - List any sub-issues that should be created to track individual pieces
+
+            Be specific and actionable. Reference actual code, files, and architecture
+            from the repository. Read CLAUDE.md and any relevant docs/ for context.
+            Keep estimates realistic.
+          timeout_minutes: 10
