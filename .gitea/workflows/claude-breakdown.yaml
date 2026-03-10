@@ -9,49 +9,67 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get issue and analyze
-        id: analyze
+      - name: Analyze and post breakdown
         shell: bash
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO_FULL: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
-          ISSUE_NUMBER="${{ github.event.issue.number }}"
-          REPO="${{ github.repository }}"
-          API_URL="${{ github.server_url }}/api/v1"
+          python3 << 'PYSCRIPT'
+          import json, urllib.request, os, subprocess, tempfile
 
-          # Fetch issue details
-          ISSUE_DATA=$(curl -sf -H "Authorization: token $GITEA_TOKEN" \
-            "$API_URL/repos/$REPO/issues/$ISSUE_NUMBER")
-          TITLE=$(echo "$ISSUE_DATA" | python3 -c "import sys,json; print(json.load(sys.stdin)['title'])")
-          BODY=$(echo "$ISSUE_DATA" | python3 -c "import sys,json; print(json.load(sys.stdin).get('body','No description'))" 2>/dev/null || echo "No description")
+          API_KEY = os.environ["ANTHROPIC_API_KEY"]
+          GITEA_TOKEN = os.environ["GITEA_TOKEN"]
+          ISSUE_NUM = os.environ["ISSUE_NUMBER"]
+          REPO = os.environ["REPO_FULL"]
+          SERVER = os.environ["SERVER_URL"]
+          GITEA_API = f"{SERVER}/api/v1"
 
-          # Get repo structure for context
-          TREE=$(find . -type f -not -path './.git/*' -not -path './node_modules/*' | sort | head -50)
+          # Fetch issue
+          req = urllib.request.Request(
+              f"{GITEA_API}/repos/{REPO}/issues/{ISSUE_NUM}",
+              headers={"Authorization": f"token {GITEA_TOKEN}"}
+          )
+          issue = json.loads(urllib.request.urlopen(req).read())
+          title = issue["title"]
+          body = issue.get("body", "No description") or "No description"
+          labels = [l["name"] for l in issue.get("labels", [])]
 
-          # Read CLAUDE.md if it exists
-          CLAUDE_MD=""
-          if [ -f "CLAUDE.md" ]; then
-            CLAUDE_MD=$(cat CLAUDE.md | head -100)
-          fi
+          # Get repo tree
+          tree_result = subprocess.run(
+              ["find", ".", "-type", "f", "-not", "-path", "./.git/*",
+               "-not", "-path", "./node_modules/*"],
+              capture_output=True, text=True
+          )
+          tree = "\n".join(sorted(tree_result.stdout.strip().split("\n"))[:50])
 
-          # Call Anthropic API directly
-          PROMPT="You are analyzing a codebase issue. Produce a detailed implementation plan.
+          # Read CLAUDE.md
+          claude_md = ""
+          if os.path.exists("CLAUDE.md"):
+              with open("CLAUDE.md") as f:
+                  claude_md = f.read()[:3000]
 
-          Issue #${ISSUE_NUMBER}: ${TITLE}
+          # Build prompt
+          prompt = f"""You are analyzing a codebase issue. Produce a detailed implementation plan.
+
+          Issue #{ISSUE_NUM}: {title}
+          Labels: {', '.join(labels)}
 
           Issue body:
-          ${BODY}
+          {body}
 
           Repository structure (first 50 files):
-          ${TREE}
+          {tree}
 
-          Project context (CLAUDE.md):
-          ${CLAUDE_MD}
+          Project context (CLAUDE.md excerpt):
+          {claude_md}
 
-          Structure your response as:
+          Structure your response EXACTLY as:
 
-          ## Implementation Plan for #${ISSUE_NUMBER}
+          ## Implementation Plan for #{ISSUE_NUM}
 
           ### Steps
           For each step:
@@ -66,25 +84,20 @@ jobs:
           ### Questions / Ambiguities
           - Items needing clarification
 
-          Be specific. Reference actual code and files."
+          Be specific. Reference actual code and files. small = hours, medium = 1-2 days, large = 3+ days."""
 
-          # Use python to call the API (avoids shell escaping issues)
-          python3 << PYEOF2
-          import json, urllib.request, os
-
-          prompt = json.loads(open("/dev/stdin").read() if False else '""')
-
-          payload = {
+          # Call Anthropic API
+          payload = json.dumps({
               "model": "claude-sonnet-4-20250514",
               "max_tokens": 4096,
-              "messages": [{"role": "user", "content": """$PROMPT"""}]
-          }
+              "messages": [{"role": "user", "content": prompt}]
+          })
 
           req = urllib.request.Request(
               "https://api.anthropic.com/v1/messages",
-              data=json.dumps(payload).encode(),
+              data=payload.encode(),
               headers={
-                  "x-api-key": os.environ["ANTHROPIC_API_KEY"],
+                  "x-api-key": API_KEY,
                   "anthropic-version": "2023-06-01",
                   "content-type": "application/json"
               }
@@ -93,47 +106,24 @@ jobs:
           try:
               resp = urllib.request.urlopen(req, timeout=120)
               result = json.loads(resp.read())
-              text = result["content"][0]["text"]
-              with open("/tmp/breakdown-result.md", "w") as f:
-                  f.write(text)
-              print("Analysis complete")
+              analysis = result["content"][0]["text"]
           except Exception as e:
-              print(f"API error: {e}")
-              with open("/tmp/breakdown-result.md", "w") as f:
-                  f.write(f"Breakdown analysis failed: {e}")
-          PYEOF2
+              analysis = f"**Breakdown analysis failed:** {e}"
 
-      - name: Post comment
-        if: always()
-        shell: bash
-        env:
-          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
-        run: |
-          ISSUE_NUMBER="${{ github.event.issue.number }}"
-          REPO="${{ github.repository }}"
-          API_URL="${{ github.server_url }}/api/v1"
-
-          if [ -f /tmp/breakdown-result.md ]; then
-            python3 << PYEOF3
-          import json, subprocess, tempfile, os
-
-          with open("/tmp/breakdown-result.md") as f:
-              body = f.read()
-
-          payload = json.dumps({"body": body})
+          # Post as comment
+          comment_payload = json.dumps({"body": analysis})
           with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-              f.write(payload)
+              f.write(comment_payload)
               tmpfile = f.name
 
           subprocess.run([
               "curl", "-sf",
-              "-H", "Authorization: token " + os.environ["GITEA_TOKEN"],
+              "-H", f"Authorization: token {GITEA_TOKEN}",
               "-X", "POST",
-              "${API_URL}/repos/${REPO}/issues/${ISSUE_NUMBER}/comments",
+              f"{GITEA_API}/repos/{REPO}/issues/{ISSUE_NUM}/comments",
               "-H", "Content-Type: application/json",
-              "-d", "@" + tmpfile
-          ])
+              "-d", f"@{tmpfile}"
+          ], capture_output=True)
           os.unlink(tmpfile)
-          print("Comment posted")
-          PYEOF3
-          fi
+          print(f"Posted breakdown for #{ISSUE_NUM}")
+          PYSCRIPT
