@@ -11,6 +11,11 @@ on:
 
 jobs:
   claude-response:
+    if: >-
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      github.event_name == 'issues'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -20,3 +25,4 @@ jobs:
           gitea_token: ${{ secrets.GITEA_TOKEN }}
           claude_git_name: claude-review
           claude_git_email: claude@anthropic.com
+          timeout_minutes: 10
