@@ -507,6 +507,7 @@ export function renderScene(now) {
     ctx.font = `${Math.floor(sprH)}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.fillStyle = spr.color || '#ffffff';
     ctx.fillText(spr.icon, screenX, h / 2);
 
     // HP bar for monsters
