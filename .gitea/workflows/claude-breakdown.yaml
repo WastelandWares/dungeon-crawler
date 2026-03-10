@@ -19,7 +19,7 @@ jobs:
           SERVER_URL: ${{ github.server_url }}
         run: |
           python3 << 'PYSCRIPT'
-          import json, urllib.request, os, subprocess, tempfile
+          import json, os, subprocess, tempfile
 
           API_KEY = os.environ["ANTHROPIC_API_KEY"]
           GITEA_TOKEN = os.environ["GITEA_TOKEN"]
@@ -28,23 +28,39 @@ jobs:
           SERVER = os.environ["SERVER_URL"]
           GITEA_API = f"{SERVER}/api/v1"
 
+          def api_call(method, url, data=None, headers=None):
+              """Make API call via curl to avoid SSL issues."""
+              cmd = ["curl", "-sf"]
+              for k, v in (headers or {}).items():
+                  cmd.extend(["-H", f"{k}: {v}"])
+              if method != "GET":
+                  cmd.extend(["-X", method])
+              if data:
+                  tf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+                  tf.write(data if isinstance(data, str) else json.dumps(data))
+                  tf.close()
+                  cmd.extend(["-H", "Content-Type: application/json", "-d", f"@{tf.name}"])
+              cmd.append(url)
+              r = subprocess.run(cmd, capture_output=True, text=True)
+              if data:
+                  os.unlink(tf.name)
+              return json.loads(r.stdout) if r.stdout else None
+
           # Fetch issue
-          req = urllib.request.Request(
-              f"{GITEA_API}/repos/{REPO}/issues/{ISSUE_NUM}",
-              headers={"Authorization": f"token {GITEA_TOKEN}"}
-          )
-          issue = json.loads(urllib.request.urlopen(req).read())
+          issue = api_call("GET", f"{GITEA_API}/repos/{REPO}/issues/{ISSUE_NUM}",
+                           headers={"Authorization": f"token {GITEA_TOKEN}"})
           title = issue["title"]
           body = issue.get("body", "No description") or "No description"
           labels = [l["name"] for l in issue.get("labels", [])]
 
           # Get repo tree
-          tree_result = subprocess.run(
+          tree_r = subprocess.run(
               ["find", ".", "-type", "f", "-not", "-path", "./.git/*",
                "-not", "-path", "./node_modules/*"],
-              capture_output=True, text=True
-          )
-          tree = "\n".join(sorted(tree_result.stdout.strip().split("\n"))[:50])
+              capture_output=True, text=True)
+          tree = "
+".join(sorted(tree_r.stdout.strip().split("
+"))[:50])
 
           # Read CLAUDE.md
           claude_md = ""
@@ -52,11 +68,10 @@ jobs:
               with open("CLAUDE.md") as f:
                   claude_md = f.read()[:3000]
 
-          # Build prompt
           prompt = f"""You are analyzing a codebase issue. Produce a detailed implementation plan.
 
           Issue #{ISSUE_NUM}: {title}
-          Labels: {', '.join(labels)}
+          Labels: {", ".join(labels)}
 
           Issue body:
           {body}
@@ -67,16 +82,13 @@ jobs:
           Project context (CLAUDE.md excerpt):
           {claude_md}
 
-          Structure your response EXACTLY as:
+          Structure your response as:
 
           ## Implementation Plan for #{ISSUE_NUM}
 
           ### Steps
-          For each step:
           - **Step N: [title]** (complexity: trivial/small/medium/large)
-            - What to do
-            - Files affected
-            - Dependencies
+            - What to do, files affected, dependencies
 
           ### Acceptance Criteria
           - Testable criteria
@@ -84,46 +96,24 @@ jobs:
           ### Questions / Ambiguities
           - Items needing clarification
 
-          Be specific. Reference actual code and files. small = hours, medium = 1-2 days, large = 3+ days."""
+          Be specific. Reference actual code and files."""
 
-          # Call Anthropic API
-          payload = json.dumps({
-              "model": "claude-sonnet-4-20250514",
-              "max_tokens": 4096,
-              "messages": [{"role": "user", "content": prompt}]
-          })
+          # Call Anthropic API via curl
+          result = api_call("POST", "https://api.anthropic.com/v1/messages",
+              data={"model": "claude-sonnet-4-20250514", "max_tokens": 4096,
+                    "messages": [{"role": "user", "content": prompt}]},
+              headers={"x-api-key": API_KEY, "anthropic-version": "2023-06-01"})
 
-          req = urllib.request.Request(
-              "https://api.anthropic.com/v1/messages",
-              data=payload.encode(),
-              headers={
-                  "x-api-key": API_KEY,
-                  "anthropic-version": "2023-06-01",
-                  "content-type": "application/json"
-              }
-          )
-
-          try:
-              resp = urllib.request.urlopen(req, timeout=120)
-              result = json.loads(resp.read())
+          if result and result.get("content"):
               analysis = result["content"][0]["text"]
-          except Exception as e:
-              analysis = f"**Breakdown analysis failed:** {e}"
+          elif result and result.get("error"):
+              analysis = f"**Breakdown failed:** {result['error'].get('message', str(result['error']))}"
+          else:
+              analysis = "**Breakdown failed:** No response from API"
 
-          # Post as comment
-          comment_payload = json.dumps({"body": analysis})
-          with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-              f.write(comment_payload)
-              tmpfile = f.name
-
-          subprocess.run([
-              "curl", "-sf",
-              "-H", f"Authorization: token {GITEA_TOKEN}",
-              "-X", "POST",
-              f"{GITEA_API}/repos/{REPO}/issues/{ISSUE_NUM}/comments",
-              "-H", "Content-Type: application/json",
-              "-d", f"@{tmpfile}"
-          ], capture_output=True)
-          os.unlink(tmpfile)
+          # Post comment
+          api_call("POST", f"{GITEA_API}/repos/{REPO}/issues/{ISSUE_NUM}/comments",
+              data={"body": analysis},
+              headers={"Authorization": f"token {GITEA_TOKEN}"})
           print(f"Posted breakdown for #{ISSUE_NUM}")
           PYSCRIPT
