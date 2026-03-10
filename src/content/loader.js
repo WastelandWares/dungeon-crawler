@@ -105,7 +105,10 @@ export async function loadAllContent(basePath = 'content') {
     if (!manifest[category]) continue;
     for (const file of manifest[category]) {
       const content = await loadContentFile(`${basePath}/${category}/${file}`);
-      content.meta.category = category;
+      // Only set category from folder name if item doesn't define its own
+      if (!content.meta.category) {
+        content.meta.category = category;
+      }
       results[category].push(content);
     }
   }

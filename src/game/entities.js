@@ -23,6 +23,14 @@ export const ITEM_TYPES = {
   },
   potion: {
     name: 'Healing Potion', color: '#c44444', icon: '\u{1F9EA}',
+    id: 'healing_potion',
+    shape: '1x1',
+    category: 'consumable',
+    stackable: true,
+    maxStack: 5,
+    basePrice: 10,
+    tier: 1,
+    healAmount: [1, 8],
     effect: (p) => {
       const heal = roll(1, 8) + 1;
       p.hp = Math.min(p.maxHp, p.hp + heal);

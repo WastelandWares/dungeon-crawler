@@ -645,6 +645,41 @@
   color: #8a6d2b;
 }
 
+.tooltip-use-hint {
+  font-size: 0.7rem;
+  color: #c9a84c;
+  font-style: italic;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(138, 109, 43, 0.3);
+}
+
+/* ============================================================
+   INVENTORY ACTION BAR — Use button for consumables
+   ============================================================ */
+
+.inv-action-bar {
+  padding: 0.5rem 1.2rem;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.inv-action-bar.hidden {
+  display: none;
+}
+
+.inv-action-btn {
+  font-size: 0.8rem;
+  padding: 0.4rem 1.2rem;
+  min-height: 36px;
+  min-width: 100px;
+  border-color: #c9a84c;
+  background: linear-gradient(180deg, #4a3a14, #3a2a0c);
+  color: #f0d878;
+  animation: pulse 2s ease-in-out infinite;
+}
+
 /* ============================================================
    SHOP PANEL
    ============================================================ */
