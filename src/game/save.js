@@ -29,6 +29,7 @@ export function saveGame(gameState) {
       pendingAbilityPoints: p.pendingAbilityPoints,
       baseAttack: p.baseAttack,
       saves: { ...p.saves },
+      _lastConMod: p._lastConMod,
       inventory: p.inventory,
       equipment: p.equipment,
     },

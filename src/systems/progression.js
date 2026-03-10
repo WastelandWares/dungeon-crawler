@@ -59,6 +59,17 @@ export function computeDerivedStats(player, equipStats = {}) {
   // Damage bonus from STR + equipment
   player.damageBonus = strMod + (equipStats.damageBonus || 0);
 
+  // HP: CON modifier applies retroactively to all levels (D&D 3.5e rule).
+  // Track previous conMod so we can adjust maxHp when CON changes.
+  const prevConMod = player._lastConMod ?? conMod;
+  if (conMod !== prevConMod) {
+    const hpDelta = (conMod - prevConMod) * player.level;
+    player.maxHp = Math.max(1, player.maxHp + hpDelta);
+    // Also adjust current HP proportionally (don't drop below 1)
+    player.hp = Math.max(1, Math.min(player.hp + hpDelta, player.maxHp));
+  }
+  player._lastConMod = conMod;
+
   // Save bonuses
   player.saves = {
     fort: conMod,

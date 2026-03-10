@@ -47,6 +47,7 @@ export function newGame() {
   const conMod = abilityMod(player.abilities.con);
   player.maxHp = Math.max(1, roll(1, 10) + conMod);
   player.hp = player.maxHp;
+  player._lastConMod = conMod;
 
   game = {
     player,
@@ -87,6 +88,7 @@ export function restoreGame(saveData) {
       pendingAbilityPoints: p.pendingAbilityPoints,
       baseAttack: p.baseAttack,
       saves: { ...p.saves },
+      _lastConMod: p._lastConMod ?? abilityMod(p.abilities.con),
       inventory: p.inventory || createInventory(),
       equipment: p.equipment || createEquipment(),
     },
