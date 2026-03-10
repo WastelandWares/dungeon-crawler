@@ -12,15 +12,20 @@ import {
 } from '../systems/equipment.js';
 import { computeDerivedStats } from '../systems/progression.js';
 import { closePanel } from './panels.js';
+import { isTouchDevice } from './touch.js';
 
 let panelEl = null;
 let gridEl = null;
 let slotsEl = null;
 let tooltipEl = null;
+let actionBarEl = null;
 
 // Held item state (click-to-pick, click-to-place)
 let heldItem = null;
 let heldSource = null; // { type: 'grid' } or { type: 'equip', slot: '...' }
+
+// Track hovered/selected consumable for action bar
+let selectedConsumable = null;
 
 // ============================================================
 //  INIT
@@ -30,6 +35,18 @@ export function initInventoryUI(panelElement) {
   gridEl = panelElement.querySelector('#inventory-grid');
   slotsEl = panelElement.querySelector('#equipment-slots');
   tooltipEl = panelElement.querySelector('#item-tooltip');
+  actionBarEl = panelElement.querySelector('#inventory-action-bar');
+
+  // Build action bar if it doesn't exist in the HTML
+  if (!actionBarEl) {
+    actionBarEl = document.createElement('div');
+    actionBarEl.id = 'inventory-action-bar';
+    actionBarEl.className = 'inv-action-bar hidden';
+    // Insert after grid
+    if (gridEl && gridEl.parentNode) {
+      gridEl.parentNode.insertBefore(actionBarEl, gridEl.nextSibling);
+    }
+  }
 
   // Close button
   const closeBtn = panelElement.querySelector('.panel-close');
@@ -78,6 +95,7 @@ function buildGrid() {
       cell.dataset.col = c;
       cell.dataset.row = r;
       cell.addEventListener('click', () => onGridCellClick(c, r));
+      cell.addEventListener('dblclick', (e) => { e.preventDefault(); onGridCellRightClick(c, r); });
       cell.addEventListener('contextmenu', (e) => { e.preventDefault(); onGridCellRightClick(c, r); });
       // Long-press for touch
       let longTimer = null;
@@ -86,9 +104,9 @@ function buildGrid() {
       }, { passive: true });
       cell.addEventListener('touchend', () => clearTimeout(longTimer));
       cell.addEventListener('touchmove', () => clearTimeout(longTimer));
-      // Tooltip on hover
-      cell.addEventListener('mouseenter', () => showTooltipForGrid(c, r));
-      cell.addEventListener('mouseleave', hideTooltip);
+      // Tooltip + action bar on hover/touch
+      cell.addEventListener('mouseenter', () => { showTooltipForGrid(c, r); showActionBarForGrid(c, r); });
+      cell.addEventListener('mouseleave', () => { hideTooltip(); hideActionBar(); });
       gridEl.appendChild(cell);
     }
   }
@@ -245,8 +263,15 @@ function onGridCellClick(col, row) {
       }
     }
   } else {
-    // Picking up item from grid
+    // Show action bar for consumables on click (especially useful on mobile)
     const item = getItemAt(inv, col, row);
+    if (item && item.category === 'consumable' && isTouchDevice()) {
+      // On touch: single tap shows Use button, don't pick up
+      showActionBarForGrid(col, row);
+      showTooltipForGrid(col, row);
+      return;
+    }
+    // Picking up item from grid
     if (item) {
       removeItem(inv, item);
       heldItem = item;
@@ -386,6 +411,14 @@ function showTooltip(item) {
     html += `<div class="tooltip-stack">${item.count} / ${item.maxStack}</div>`;
   }
 
+  // Add usage hint for consumable items
+  if (item.category === 'consumable') {
+    const hint = isTouchDevice()
+      ? 'Tap & hold to use'
+      : 'Right-click or double-click to use';
+    html += `<div class="tooltip-use-hint">${hint}</div>`;
+  }
+
   tooltipEl.innerHTML = html;
   tooltipEl.classList.remove('hidden');
 }
@@ -393,6 +426,56 @@ function showTooltip(item) {
 function hideTooltip() {
   if (!tooltipEl) return;
   tooltipEl.classList.add('hidden');
+}
+
+// ============================================================
+//  ACTION BAR — visible "Use" button for consumables
+// ============================================================
+function showActionBarForGrid(col, row) {
+  const item = getItemAt(game.player.inventory, col, row);
+  if (item && item.category === 'consumable' && !heldItem) {
+    selectedConsumable = { item, col, row };
+    renderActionBar(item);
+  } else {
+    hideActionBar();
+  }
+}
+
+function renderActionBar(item) {
+  if (!actionBarEl) return;
+  actionBarEl.innerHTML = '';
+
+  const useBtn = document.createElement('button');
+  useBtn.className = 'btn-parchment inv-action-btn';
+  useBtn.textContent = `Use ${item.name}`;
+  useBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (selectedConsumable) {
+      useConsumable(game.player.inventory, selectedConsumable.item);
+      selectedConsumable = null;
+      hideActionBar();
+      refreshInventoryUI();
+    }
+  });
+  useBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (selectedConsumable) {
+      useConsumable(game.player.inventory, selectedConsumable.item);
+      selectedConsumable = null;
+      hideActionBar();
+      refreshInventoryUI();
+    }
+  });
+
+  actionBarEl.appendChild(useBtn);
+  actionBarEl.classList.remove('hidden');
+}
+
+function hideActionBar() {
+  if (!actionBarEl) return;
+  selectedConsumable = null;
+  actionBarEl.classList.add('hidden');
 }
 
 // ============================================================
