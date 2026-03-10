@@ -220,15 +220,16 @@ export function isWalkable(x, y) {
 }
 
 export function tryMove(entity, nx, ny, radius = 0.2) {
-  const ex = entity.x, ey = entity.y;
-  if (isWalkable(nx + radius, ey) && isWalkable(nx - radius, ey) &&
-      isWalkable(nx + radius, ey + radius) && isWalkable(nx - radius, ey - radius) &&
-      isWalkable(nx + radius, ey + radius) && isWalkable(nx - radius, ey + radius)) {
+  // X-axis: check center edges + all four corners at current Y
+  if (isWalkable(nx + radius, entity.y) && isWalkable(nx - radius, entity.y) &&
+      isWalkable(nx + radius, entity.y + radius) && isWalkable(nx + radius, entity.y - radius) &&
+      isWalkable(nx - radius, entity.y + radius) && isWalkable(nx - radius, entity.y - radius)) {
     entity.x = nx;
   }
+  // Y-axis: check center edges + all four corners at (possibly updated) X
   if (isWalkable(entity.x, ny + radius) && isWalkable(entity.x, ny - radius) &&
-      isWalkable(entity.x + radius, ny + radius) && isWalkable(entity.x - radius, ny - radius) &&
-      isWalkable(entity.x + radius, ny - radius) && isWalkable(entity.x - radius, ny + radius)) {
+      isWalkable(entity.x + radius, ny + radius) && isWalkable(entity.x + radius, ny - radius) &&
+      isWalkable(entity.x - radius, ny + radius) && isWalkable(entity.x - radius, ny - radius)) {
     entity.y = ny;
   }
 }
@@ -261,7 +262,7 @@ export function updatePlayer(dt) {
     const len = Math.hypot(dx, dy);
     dx = dx / len * CFG.moveSpeed * dt;
     dy = dy / len * CFG.moveSpeed * dt;
-    tryMove(p, p.x + dx, p.y + dy, 0.4);
+    tryMove(p, p.x + dx, p.y + dy, 0.2);
 
     // Footstep sounds
     game.stepTimer -= dt;
