@@ -5,9 +5,7 @@ on:
 
 jobs:
   breakdown:
-    if: >-
-      github.event.action == 'labeled' &&
-      github.event.label.name == 'needs-breakdown'
+    if: contains(github.event.label.name, 'needs-breakdown')
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -43,5 +41,5 @@ jobs:
 
             Be specific and actionable. Reference actual code, files, and architecture
             from the repository. Read CLAUDE.md and any relevant docs/ for context.
-            Keep estimates realistic — small = hours, medium = 1-2 days, large = 3+ days.
+            Keep estimates realistic: small = hours, medium = 1-2 days, large = 3+ days.
           timeout_minutes: 10
