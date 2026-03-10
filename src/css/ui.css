@@ -333,6 +333,19 @@
   line-height: 1.8;
 }
 
+.death-support {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: #665533;
+}
+.death-support a {
+  color: #8a6d2b;
+  text-decoration: none;
+}
+.death-support a:hover {
+  color: #c9a84c;
+}
+
 /* ============================================================
    TOUCH CONTROLS
    ============================================================ */
