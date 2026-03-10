@@ -5,7 +5,6 @@ on:
 
 jobs:
   breakdown:
-    if: contains(github.event.label.name, 'needs-breakdown')
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
