@@ -17,12 +17,17 @@ import { initShopUI, setShopStock, refreshShopUI } from './ui/shop-ui.js';
 import { getNearestInteractable, getInteractionPrompt } from './game/interactions.js';
 import { initQuestUI, refreshQuestUI } from './ui/quest-ui.js';
 import { initStatsUI, refreshStatsUI } from './ui/stats-ui.js';
+import { initContent } from './content/registry.js';
 
 // ============================================================
 //  INIT
 // ============================================================
 const canvas = document.getElementById('game');
 const mmCanvas = document.getElementById('minimap');
+
+// Load content registry (items, monsters, quests) from markdown files.
+// Must complete before game start so the shop has items to sell.
+const contentReady = initContent('content');
 
 Input.init();
 initTouchControls();
@@ -262,7 +267,8 @@ function gameLoop(timestamp) {
 // ============================================================
 //  SCREEN TRANSITIONS
 // ============================================================
-function beginNewGame(screenId) {
+async function beginNewGame(screenId) {
+  await contentReady;
   document.getElementById(screenId).style.display = 'none';
   if (!isTouch) canvas.requestPointerLock();
   deleteSave();
@@ -273,7 +279,8 @@ function beginNewGame(screenId) {
   addMessage('Visit the merchants, check the bounty board, or enter the dungeon.', 'info');
 }
 
-function continueGame(screenId) {
+async function continueGame(screenId) {
+  await contentReady;
   const saveData = loadGame();
   if (!saveData) {
     // Save corrupted or missing — fall back to new game
