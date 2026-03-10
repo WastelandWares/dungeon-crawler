@@ -33,6 +33,12 @@ initMessages(document.getElementById('messages'));
 const isTouch = isTouchDevice();
 const interactionPrompt = document.getElementById('interaction-prompt');
 
+// Use Venmo deep link on mobile for title screen support link
+if (isTouch) {
+  const supportLink = document.querySelector('.title-links .support-link');
+  if (supportLink) supportLink.href = 'venmo://paycharge?txn=pay&recipients=wastelandwares';
+}
+
 // ============================================================
 //  PANELS & INVENTORY UI
 // ============================================================
@@ -240,6 +246,11 @@ function gameLoop(timestamp) {
     if (!isTouch) document.exitPointerLock();
     const ds = document.getElementById('death-screen');
     ds.style.display = 'flex';
+    // Use Venmo deep link on mobile, web link on desktop
+    const venmoLink = ds.querySelector('#death-venmo-link');
+    if (venmoLink && isTouch) {
+      venmoLink.href = 'venmo://paycharge?txn=pay&recipients=wastelandwares';
+    }
     document.getElementById('death-stats').innerHTML =
       `Reached dungeon level ${game.level}<br>` +
       `Level ${game.player.level} adventurer<br>` +
@@ -323,6 +334,13 @@ deathScreen.addEventListener('touchend', e => {
   e.preventDefault();
   handleDeath();
 });
+
+// Prevent Venmo link clicks from triggering death screen restart
+const deathVenmoLink = document.getElementById('death-venmo-link');
+if (deathVenmoLink) {
+  deathVenmoLink.addEventListener('click', e => e.stopPropagation());
+  deathVenmoLink.addEventListener('touchend', e => e.stopPropagation());
+}
 
 canvas.addEventListener('click', () => {
   if (state === 'playing' && !isAnyPanelOpen()) {
