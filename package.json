@@ -1,0 +1,14 @@
+{
+  "name": "dungeon-crawler",
+  "version": "0.7.0",
+  "private": true,
+  "description": "Turtles Dungeon Crawler - D&D 3.5e inspired web dungeon crawling game",
+  "scripts": {
+    "dev": "vite src",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

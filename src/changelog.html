@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelog — Turtles</title>
+<style>
+  body { background: #0a0806; color: #e8d5b7; font-family: Georgia, serif; max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
+  h1 { color: #c9a84c; font-family: 'Cinzel', serif; border-bottom: 2px solid #8a6d2b; padding-bottom: 0.5rem; }
+  h2 { color: #c9a84c; margin-top: 2rem; }
+  h3 { color: #a89070; }
+  h4 { color: #8a8060; }
+  ul { padding-left: 1.5rem; }
+  li { margin: 0.3rem 0; line-height: 1.5; }
+  strong { color: #c9a84c; }
+  a { color: #c9a84c; }
+  .back { margin-bottom: 1.5rem; display: inline-block; }
+</style>
+</head>
+<body>
+<a class="back" href="/">&larr; Back to Game</a>
+<h1>Changelog</h1>
+<h2>[Unreleased]</h2>
+<h3>Sprint 1 &mdash; The Scaffolding</h3>
+<h4>2026-03-08 &mdash; Session 1: Prototype</h4>
+<ul>
+<li><strong>Initial prototype</strong> &mdash; Single-file raycasting dungeon crawler (Drizzt, pre-sprint)
+  <ul>
+    <li>Raycasting engine with distance-based torch lighting</li>
+    <li>Procedural maze generation (recursive backtracker)</li>
+    <li>d20 combat system (attack rolls vs AC)</li>
+    <li>Skeleton enemy, gold &amp; potion pickups</li>
+    <li>Doors, stairs, multi-level dungeons</li>
+    <li>Web Audio SFX (hit, miss, hurt, pickup, steps, doors)</li>
+    <li>Minimap with fog of war</li>
+    <li>Title screen &amp; death screen</li>
+    <li>Deployed to turtles.wastelandwares.com</li>
+  </ul>
+</li>
+<li><strong>T1: Scaffolding</strong> &mdash; Extracted monolith into 16 ES modules (Elminster)
+  <ul>
+    <li>7 module groups: engine/, game/, ui/, config, utils, main</li>
+    <li>Reduced mouse sensitivity (0.002 &rarr; 0.0012)</li>
+    <li>Arrow key scroll prevention</li>
+    <li>Zero globals, clean import/export graph</li>
+  </ul>
+</li>
+<li><strong>T2: Wall Textures</strong> &mdash; Procedural textured walls via pixel buffer (Drizzt)
+  <ul>
+    <li>4 texture types: stone, wood, mossy, brick (64x64 procedural)</li>
+    <li>Full ImageData pixel buffer renderer (1 putImageData per frame)</li>
+    <li>Biome variation: mossy on floor 5+, brick mixed in via hash</li>
+  </ul>
+</li>
+<li><strong>T10: Touch Controls</strong> &mdash; Full mobile support (Tasha)
+  <ul>
+    <li>Dual virtual joystick (left=move, right=look, center=attack)</li>
+    <li>Responsive canvas with safe area insets</li>
+  </ul>
+</li>
+<li><strong>T3: Ability Scores &amp; Saves</strong> &mdash; D&amp;D 3.5e-lite progression (Elminster)
+  <ul>
+    <li>6 ability scores (4d6 drop lowest), derived stats</li>
+    <li>Level-up: d10+CON HP, +1 ability point, baseAttack scaling</li>
+    <li>localStorage save system with export/import</li>
+  </ul>
+</li>
+<li><strong>T9: Content System</strong> &mdash; Markdown content packs (Regis)
+  <ul>
+    <li>5 monsters, 10 items across all equipment categories</li>
+    <li>Frontmatter parser with floor/tier filtering</li>
+  </ul>
+</li>
+<li><strong>T4+T5: Inventory &amp; Equipment</strong> &mdash; Grid backpack + paper doll (Bruenor)
+  <ul>
+    <li>8x4 grid inventory with item shapes and drag/drop</li>
+    <li>8 equipment slots with stat stacking</li>
+  </ul>
+</li>
+<li><strong>T6: Hub Town</strong> &mdash; Walkable town hub (Tasha)
+  <ul>
+    <li>15x15 hand-crafted town with NPCs</li>
+    <li>Proximity-based interaction system</li>
+  </ul>
+</li>
+<li><strong>T7: Shop System</strong> &mdash; Tiered shop with buy/sell (Mordenkainen)
+  <ul>
+    <li>Tier-based stock, CHA affects prices</li>
+  </ul>
+</li>
+<li><strong>T8: Bounty Board</strong> &mdash; Procedural quest system (Mordenkainen)
+  <ul>
+    <li>3 quest types: kill, explore, survive</li>
+    <li>Quest progress tracking with HUD messages</li>
+  </ul>
+</li>
+<li><strong>v0.7.0</strong> &mdash; Textured floors/ceilings, trigger system (keys, locked doors, buttons, gates), character sheet, bug fixes</li>
+</ul>
+</body>
+</html>

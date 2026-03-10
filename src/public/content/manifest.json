@@ -1,0 +1,5 @@
+{
+  "monsters": ["skeleton.md", "goblin.md", "dire_rat.md", "zombie.md", "ogre.md"],
+  "items": ["longsword.md", "dagger.md", "chainmail.md", "leather_armor.md", "healing_potion.md", "wooden_shield.md", "iron_helm.md", "boots_of_speed.md", "ring_of_protection.md", "town_portal.md"],
+  "quests": []
+}

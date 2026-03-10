@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Turtles — Dungeon Crawler</title>
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+
+<canvas id="game"></canvas>
+<canvas id="minimap" width="140" height="140"></canvas>
+
+<div id="hud">
+  <div class="hud-stat">HP<span class="value hp" id="hud-hp">20</span></div>
+  <div class="hud-stat">AC<span class="value ac" id="hud-ac">12</span></div>
+  <div class="hud-stat hud-level-group">
+    <span class="value level" id="hud-level">Lv 1</span>
+    <div id="xp-bar"><div id="xp-fill"></div></div>
+    <div id="xp-label">XP: 0 / 100</div>
+  </div>
+  <div class="hud-stat">Gold<span class="value gold" id="hud-gold">0</span></div>
+  <div class="hud-stat" style="display:none;" id="hud-keys-wrap">&#x1F5DD;<span class="value" id="hud-keys">0</span></div>
+  <div id="hud-ability-pts" class="hud-ability-indicator" style="display:none;"></div>
+</div>
+<div id="messages"></div>
+<div id="interaction-prompt"></div>
+
+<div id="title-screen">
+  <h1>Turtles</h1>
+  <div class="sub">A D&D 3.5e Dungeon Crawler</div>
+  <div class="title-buttons">
+    <button id="btn-continue" class="btn-parchment" style="display:none;">Continue</button>
+    <button id="btn-new-game" class="btn-parchment">New Game</button>
+  </div>
+  <div id="title-changelog" class="title-changelog"></div>
+  <div class="controls controls-desktop">
+    WASD — Move &nbsp;|&nbsp; Mouse — Look &nbsp;|&nbsp; Click — Attack<br>
+    Space — Open Doors &nbsp;|&nbsp; E — Descend/Interact &nbsp;|&nbsp; I — Inventory &nbsp;|&nbsp; C — Stats
+  </div>
+  <div class="controls controls-touch">
+    Left Stick — Move &nbsp;|&nbsp; Right Stick — Look<br>
+    Center Tap — Attack
+  </div>
+  <div class="title-links">
+    <a href="changelog.html">Changelog</a> &nbsp;|&nbsp; <a href="scoreboard.html">Agent Scoreboard</a>
+  </div>
+  <div id="title-version" class="title-version"></div>
+</div>
+
+<div id="panels-container">
+  <div id="panel-inventory" class="panel">
+    <div class="panel-header">
+      <h2>Inventory</h2>
+      <button class="panel-close">&times;</button>
+    </div>
+    <div id="equipment-slots"></div>
+    <div id="inventory-grid"></div>
+    <div id="item-tooltip" class="hidden"></div>
+  </div>
+  <div id="panel-shop" class="panel">
+    <div class="panel-header">
+      <h2>Grimwald's Shop</h2>
+      <button class="panel-close">&times;</button>
+    </div>
+    <div id="shop-content"></div>
+  </div>
+  <div id="panel-quests" class="panel">
+    <div class="panel-header">
+      <h2>Bounty Board</h2>
+      <button class="panel-close">&times;</button>
+    </div>
+    <div id="quest-content"></div>
+  </div>
+  <div id="panel-stats" class="panel">
+    <div class="panel-header">
+      <h2>Character Sheet</h2>
+      <button class="panel-close">&times;</button>
+    </div>
+    <div id="stats-content"></div>
+  </div>
+</div>
+
+<button id="btn-inventory" class="btn-inventory-hud" title="Inventory (I)">&#x1F392;</button>
+
+<div id="death-screen">
+  <h1>You Have Fallen</h1>
+  <div class="stats" id="death-stats"></div>
+  <div class="prompt">Tap to Rise Again</div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

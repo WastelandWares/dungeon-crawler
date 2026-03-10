@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  background: #000;
+  font-family: 'MedievalSharp', cursive;
+  cursor: crosshair;
+  /* Safe area insets for notched phones */
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+#game {
+  display: block;
+  image-rendering: pixelated;
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  touch-action: none;
+}
+
+#minimap {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  border: 1px solid #8a6d2b;
+  opacity: 0.8;
+  image-rendering: pixelated;
+}
+
+/* Smaller minimap on small screens */
+@media (max-width: 500px) {
+  #minimap {
+    width: 90px;
+    height: 90px;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
+@media (max-width: 350px) {
+  #minimap {
+    width: 70px;
+    height: 70px;
+  }
+}
