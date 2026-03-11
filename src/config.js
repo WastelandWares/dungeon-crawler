@@ -1,9 +1,10 @@
 // ============================================================
 //  VERSION — increment on every deploy
 // ============================================================
-export const VERSION = '0.7.0';
-export const BUILD_DATE = '2026-03-09';
+export const VERSION = '0.9.0';
+export const BUILD_DATE = '2026-03-11';
 export const RECENT_CHANGES = [
+  'D&D 3.5e leveling — feats, class progression, Fighter BAB/saves, ability scores every 4 levels',
   'Combat visual feedback — floating damage numbers, hit/miss flash, screen shake on crits, d20 roll display',
   'Textured floors & ceilings (stone, cobblestone, wood beams)',
   'Trigger system — keys, locked doors, buttons & gates',
