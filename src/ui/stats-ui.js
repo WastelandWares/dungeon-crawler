@@ -103,11 +103,17 @@ export function refreshStatsUI() {
     btn.addEventListener('click', () => {
       const ability = btn.dataset.ability;
       if (p.pendingAbilityPoints > 0) {
+        const oldMaxHp = p.maxHp;
         p.abilities[ability]++;
         p.pendingAbilityPoints--;
         const equipStats = computeEquipmentStats(p.equipment);
         computeDerivedStats(p, equipStats);
-        addMessage(`${ABILITY_NAMES[ability]} increased to ${p.abilities[ability]}!`, 'info');
+        let msg = `${ABILITY_NAMES[ability]} increased to ${p.abilities[ability]}!`;
+        if (ability === 'con' && p.maxHp !== oldMaxHp) {
+          const hpDelta = p.maxHp - oldMaxHp;
+          msg += ` Max HP ${hpDelta > 0 ? '+' : ''}${hpDelta} (now ${p.maxHp})`;
+        }
+        addMessage(msg, 'info');
         refreshStatsUI();
       }
     });
