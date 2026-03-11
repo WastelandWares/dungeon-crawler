@@ -6,6 +6,7 @@ import { dist } from '../utils.js';
 import { game, getMapSize } from '../game/state.js';
 import { TILE } from '../game/entities.js';
 import { generateTextures } from './textures.js';
+import { getShakeOffset, renderCombatFX } from '../ui/combat-fx.js';
 
 let canvas, ctx;
 let textures = null;
@@ -447,8 +448,9 @@ export function renderScene(now) {
     }
   }
 
-  // Blit the pixel buffer to canvas
-  ctx.putImageData(frameImageData, 0, 0);
+  // Apply screen shake offset when blitting
+  const shake = getShakeOffset();
+  ctx.putImageData(frameImageData, Math.round(shake.x), Math.round(shake.y));
 
   // Render sprites (monsters + items + NPCs) — drawn on top via canvas API
   const sprites = [];
@@ -551,4 +553,7 @@ export function renderScene(now) {
   ctx.moveTo(w/2 - 8, h/2); ctx.lineTo(w/2 + 8, h/2);
   ctx.moveTo(w/2, h/2 - 8); ctx.lineTo(w/2, h/2 + 8);
   ctx.stroke();
+
+  // Combat visual effects overlay (damage numbers, flash, roll display)
+  renderCombatFX(ctx, w, h);
 }
