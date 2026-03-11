@@ -8,6 +8,7 @@ import { initMinimap, renderMinimap } from './ui/minimap.js';
 import { updateHUD } from './ui/hud.js';
 import { addMessage, initMessages } from './ui/messages.js';
 import { Input } from './engine/input.js';
+import { updateCombatFX } from './ui/combat-fx.js';
 import { initTouchControls, isTouchDevice } from './ui/touch.js';
 import { hasSave, loadGame, deleteSave, saveGame } from './game/save.js';
 import { VERSION, BUILD_DATE, RECENT_CHANGES, CFG } from './config.js';
@@ -194,6 +195,7 @@ function gameLoop(timestamp) {
   const panelOpen = isAnyPanelOpen();
   updatePlayer(dt);
   if (!panelOpen) updateMonsters(dt, timestamp);
+  updateCombatFX(dt * 1000); // convert seconds → ms for combat FX timers
   renderScene(timestamp);
   renderMinimap();
   updateHUD();

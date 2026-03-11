@@ -7,6 +7,7 @@ import { GameAudio } from '../engine/audio.js';
 import { addMessage } from '../ui/messages.js';
 import { checkLevelUp, applyLevelUp } from '../systems/progression.js';
 import { checkQuestProgress } from '../systems/quests.js';
+import { showDamageNumber, showBorderFlash, triggerScreenShake, showRollValue } from '../ui/combat-fx.js';
 
 export function playerAttack() {
   const p = game.player;
@@ -31,13 +32,21 @@ export function playerAttack() {
   }
 
   const attackRoll = d20();
+  showRollValue(attackRoll);
+
   if (attackRoll === 20 || attackRoll + p.attackBonus >= target.ac) {
     let dmg = roll(1, 8) + p.damageBonus; // longsword + STR mod
     if (dmg < 1) dmg = 1; // minimum 1 damage
-    if (attackRoll === 20) { dmg *= 2; addMessage(`CRITICAL HIT! (nat 20)`, 'combat'); }
+    const isCrit = attackRoll === 20;
+    if (isCrit) { dmg *= 2; addMessage(`CRITICAL HIT! (nat 20)`, 'combat'); }
     target.hp -= dmg;
     addMessage(`Hit ${target.name} for ${dmg} damage! (rolled ${attackRoll})`, 'combat');
     GameAudio.hit();
+
+    // Visual feedback
+    showDamageNumber(dmg, isCrit);
+    showBorderFlash(isCrit ? 'crit' : 'hit');
+    if (isCrit) triggerScreenShake(5);
     if (target.hp <= 0) {
       target.alive = false;
       p.xp += target.xp;
@@ -67,5 +76,7 @@ export function playerAttack() {
   } else {
     addMessage(`Missed ${target.name}. (rolled ${attackRoll} vs AC ${target.ac})`, 'combat');
     GameAudio.miss();
+    showBorderFlash(attackRoll === 1 ? 'fumble' : 'miss');
+    if (attackRoll === 1) triggerScreenShake(3); // fumble shake
   }
 }

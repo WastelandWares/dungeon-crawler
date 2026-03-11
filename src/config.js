@@ -4,11 +4,11 @@
 export const VERSION = '0.7.0';
 export const BUILD_DATE = '2026-03-09';
 export const RECENT_CHANGES = [
+  'Combat visual feedback — floating damage numbers, hit/miss flash, screen shake on crits, d20 roll display',
   'Textured floors & ceilings (stone, cobblestone, wood beams)',
   'Trigger system — keys, locked doors, buttons & gates',
   'Death respawn fix, mobile turn speed, touch door/stair interact',
   'Bounty board quest system — kill, explore & survive quests',
-  'Tiered shop with buy/sell & CHA price modifiers',
 ];
 
 // ============================================================
