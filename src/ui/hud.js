@@ -17,13 +17,13 @@ export function updateHUD() {
   const xpPrev = p.level > 1 ? getXpForLevel(p.level - 1) : 0;
   const xpInLevel = p.xp - xpPrev;
   const xpRange = xpNeeded - xpPrev;
-  const pct = Math.min(100, (xpInLevel / xpRange) * 100);
+  const pct = xpNeeded === Infinity ? 100 : Math.min(100, (xpInLevel / xpRange) * 100);
 
   const xpFill = document.getElementById('xp-fill');
   if (xpFill) xpFill.style.width = pct + '%';
 
   const xpLabel = document.getElementById('xp-label');
-  if (xpLabel) xpLabel.textContent = `XP: ${p.xp} / ${xpNeeded}`;
+  if (xpLabel) xpLabel.textContent = xpNeeded === Infinity ? `XP: ${p.xp} (MAX)` : `XP: ${p.xp} / ${xpNeeded}`;
 
   // Key count
   const keyWrap = document.getElementById('hud-keys-wrap');
@@ -45,6 +45,17 @@ export function updateHUD() {
       apIndicator.textContent = `+${p.pendingAbilityPoints} Ability`;
     } else {
       apIndicator.style.display = 'none';
+    }
+  }
+
+  // Pending feats indicator
+  const featIndicator = document.getElementById('hud-feat-pts');
+  if (featIndicator) {
+    if (p.pendingFeats > 0) {
+      featIndicator.style.display = 'block';
+      featIndicator.textContent = `+${p.pendingFeats} Feat${p.pendingFeats > 1 ? 's' : ''}`;
+    } else {
+      featIndicator.style.display = 'none';
     }
   }
 }

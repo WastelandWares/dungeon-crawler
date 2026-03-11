@@ -38,6 +38,8 @@ export function newGame() {
     saves: { fort: 0, reflex: 0, will: 0 },
     inventory: createInventory(),
     equipment: createEquipment(),
+    feats: [],
+    pendingFeats: 1, // Start with 1 feat to pick at level 1
   };
 
   // Compute derived stats from abilities
@@ -91,6 +93,9 @@ export function restoreGame(saveData) {
       _lastConMod: p._lastConMod ?? abilityMod(p.abilities.con),
       inventory: p.inventory || createInventory(),
       equipment: p.equipment || createEquipment(),
+      baseSaves: p.baseSaves || null,
+      feats: p.feats || [],
+      pendingFeats: p.pendingFeats || 0,
     },
     mode: 'town',
     town: null,
