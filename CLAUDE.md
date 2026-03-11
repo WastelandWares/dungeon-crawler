@@ -43,15 +43,16 @@ Two GitHub Actions workflows automate deployment via SSH + rsync:
 
 | Workflow | Trigger | Target | URL |
 |----------|---------|--------|-----|
-| `deploy-dev.yml` | Push to `_dev` | `/var/www/turtles-dev/` | https://dev.turtles.wastelandwares.com |
-| `deploy-prod.yml` | Push to `main` | `/var/www/turtles/` | https://turtles.wastelandwares.com |
+| `deploy-dev.yml` | Push to `_dev` | `/var/www/dungeoncrawler-dev/` | https://dev.dungeoncrawler.wastelandwares.com |
+| `deploy-prod.yml` | Push to `main` | `/var/www/dungeoncrawler/` | https://dungeoncrawler.wastelandwares.com |
 
 **Build steps:** checkout → Node 20 + npm ci → `npx vite build` → rsync `dist/` to server.
 
 **Required GitHub Secrets:**
 - `DEPLOY_SSH_KEY` — Private SSH key for the deploy user
-- `DEPLOY_SSH_HOST` — Hostname of the deployment server
-- `DEPLOY_SSH_USER` — SSH username on the server
+- `DEPLOY_SSH_HOST` — Server hostname (git.wastelandwares.com)
+- `DEPLOY_SSH_USER` — SSH username (claude)
+- `DEPLOY_SSH_PORT` — SSH port (16161)
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for full setup instructions.
 

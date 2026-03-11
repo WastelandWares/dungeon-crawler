@@ -31,17 +31,16 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
         run: |
-          # Set up SSH
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-          # Deploy dist/ to production site directory
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${SSH_PORT:-22}" \
             dist/ \
-            "${SSH_USER}@${SSH_HOST}:/var/www/turtles/"
+            "${SSH_USER}@${SSH_HOST}:/var/www/dungeoncrawler/"
 
-          echo "✅ Production site deployed to https://turtles.wastelandwares.com"
+          echo "✅ Production site deployed to https://dungeoncrawler.wastelandwares.com"
