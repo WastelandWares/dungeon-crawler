@@ -2,7 +2,8 @@
 //  STATS UI — Character sheet panel
 // ============================================================
 import { game } from '../game/state.js';
-import { abilityMod, getXpForLevel, applyLevelUp, checkLevelUp, computeDerivedStats } from '../systems/progression.js';
+import { abilityMod, getXpForLevel, applyLevelUp, checkLevelUp, computeDerivedStats, isAbilityScoreLevel, getFeatLevels } from '../systems/progression.js';
+import { FEAT_REGISTRY, getAvailableFeats, hasFeat } from '../systems/feats.js';
 import { computeEquipmentStats } from '../systems/equipment.js';
 import { addMessage } from './messages.js';
 
@@ -23,6 +24,89 @@ const ABILITY_DESCS = {
   wis: 'Will saves', cha: 'Shop prices',
 };
 
+/** Build dynamic level-up notice text based on what the next level grants */
+function getLevelUpNotice(player) {
+  const nextLevel = player.level + 1;
+  let text = 'Ready to level up! Gain HP and improved combat abilities.';
+  const extras = [];
+  if (typeof isAbilityScoreLevel === 'function' && isAbilityScoreLevel(nextLevel)) {
+    extras.push('Ability score increase');
+  }
+  if (typeof getFeatLevels === 'function') {
+    const featLevels = getFeatLevels();
+    if (featLevels && featLevels.includes(nextLevel)) {
+      extras.push('Choose a new feat');
+    }
+  }
+  if (extras.length > 0) {
+    text += ' + ' + extras.join(' + ');
+  }
+  return text;
+}
+
+/** Render the list of player's current feats */
+function renderFeatsList(player) {
+  const feats = player.feats || [];
+  if (feats.length === 0) return '<div class="feat-item-desc">No feats yet.</div>';
+
+  let html = '<div class="feat-list">';
+  for (const featId of feats) {
+    const feat = FEAT_REGISTRY ? FEAT_REGISTRY[featId] : null;
+    if (feat) {
+      html += `<div class="feat-item">`;
+      html += `<div class="feat-item-name">${feat.name}</div>`;
+      html += `<div class="feat-item-desc">${feat.description || ''}</div>`;
+      html += `</div>`;
+    } else {
+      html += `<div class="feat-item"><div class="feat-item-name">${featId}</div></div>`;
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+/** Render feat picker for pending feat selections */
+function renderFeatPicker(player) {
+  if (!player.pendingFeats || player.pendingFeats <= 0) return '';
+  let available = [];
+  if (typeof getAvailableFeats === 'function') {
+    available = getAvailableFeats(player);
+  }
+  if (available.length === 0) return '<div class="feat-item-desc">No feats available.</div>';
+
+  let html = '<div class="feat-picker">';
+  for (const feat of available) {
+    html += `<div class="feat-option">`;
+    html += `<div class="feat-option-info">`;
+    html += `<div class="feat-option-name">${feat.name}</div>`;
+    html += `<div class="feat-option-desc">${feat.description || ''}</div>`;
+    // Build prereq display text from the prereqs object
+    if (feat.prereqs && Object.keys(feat.prereqs).length > 0) {
+      const parts = [];
+      if (feat.prereqs.str) parts.push(`STR ${feat.prereqs.str}`);
+      if (feat.prereqs.dex) parts.push(`DEX ${feat.prereqs.dex}`);
+      if (feat.prereqs.con) parts.push(`CON ${feat.prereqs.con}`);
+      if (feat.prereqs.wis) parts.push(`WIS ${feat.prereqs.wis}`);
+      if (feat.prereqs.bab) parts.push(`BAB +${feat.prereqs.bab}`);
+      if (feat.prereqs.level) parts.push(`Level ${feat.prereqs.level}`);
+      if (feat.prereqs.feats) {
+        for (const fid of feat.prereqs.feats) {
+          const req = FEAT_REGISTRY[fid];
+          parts.push(req ? req.name : fid);
+        }
+      }
+      if (parts.length > 0) {
+        html += `<div class="feat-prereq">Requires: ${parts.join(', ')}</div>`;
+      }
+    }
+    html += `</div>`;
+    html += `<button class="btn-feat-select" data-feat-id="${feat.id}">Select</button>`;
+    html += `</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
 export function refreshStatsUI() {
   if (!container || !game || !game.player) return;
   const p = game.player;
@@ -34,7 +118,7 @@ export function refreshStatsUI() {
   // Level & XP
   html += `<div class="stats-section">`;
   html += `<div class="stats-row"><span class="stats-label">Level</span><span class="stats-value">${p.level}</span></div>`;
-  html += `<div class="stats-row"><span class="stats-label">XP</span><span class="stats-value">${p.xp} / ${xpNeeded}</span></div>`;
+  html += `<div class="stats-row"><span class="stats-label">XP</span><span class="stats-value">${xpNeeded === Infinity ? `${p.xp} (MAX)` : `${p.xp} / ${xpNeeded}`}</span></div>`;
   html += `<div class="stats-row"><span class="stats-label">HP</span><span class="stats-value">${p.hp} / ${p.maxHp}</span></div>`;
   html += `<div class="stats-row"><span class="stats-label">AC</span><span class="stats-value">${p.ac}</span></div>`;
   html += `<div class="stats-row"><span class="stats-label">Attack</span><span class="stats-value">+${p.attackBonus}</span></div>`;
@@ -44,7 +128,7 @@ export function refreshStatsUI() {
 
   // Level up notice
   if (canLevel) {
-    html += `<div class="stats-levelup">Ready to level up! Gain HP, +1 ability point, and stronger attacks.</div>`;
+    html += `<div class="stats-levelup">${getLevelUpNotice(p)}</div>`;
     html += `<button class="btn-parchment stats-levelup-btn" id="btn-levelup">Level Up!</button>`;
   }
 
@@ -65,6 +149,15 @@ export function refreshStatsUI() {
     }
     html += `</div>`;
   }
+  html += `</div>`;
+
+  // Feats section
+  html += `<div class="stats-section"><div class="stats-section-title">Feats</div>`;
+  if (p.pendingFeats > 0) {
+    html += `<div class="stats-feat-pending">${p.pendingFeats} feat${p.pendingFeats > 1 ? 's' : ''} to choose</div>`;
+    html += renderFeatPicker(p);
+  }
+  html += renderFeatsList(p);
   html += `</div>`;
 
   // Saves
@@ -114,6 +207,29 @@ export function refreshStatsUI() {
           msg += ` Max HP ${hpDelta > 0 ? '+' : ''}${hpDelta} (now ${p.maxHp})`;
         }
         addMessage(msg, 'info');
+        refreshStatsUI();
+      }
+    });
+  });
+
+  // Wire up feat selection buttons
+  container.querySelectorAll('.btn-feat-select').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const featId = btn.dataset.featId;
+      if (p.pendingFeats > 0 && featId) {
+        if (!p.feats) p.feats = [];
+        p.feats.push(featId);
+        p.pendingFeats--;
+
+        // Apply feat bonuses if feat has an onSelect callback
+        const feat = FEAT_REGISTRY ? FEAT_REGISTRY[featId] : null;
+        if (feat && typeof feat.onSelect === 'function') {
+          feat.onSelect(p);
+        }
+
+        const equipStats = computeEquipmentStats(p.equipment);
+        computeDerivedStats(p, equipStats);
+        addMessage(`Feat acquired: ${feat ? feat.name : featId}!`, 'info');
         refreshStatsUI();
       }
     });
