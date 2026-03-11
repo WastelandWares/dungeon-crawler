@@ -21,6 +21,20 @@
 <a class="back" href="/">&larr; Back to Game</a>
 <h1>Changelog</h1>
 <h2>[Unreleased]</h2>
+
+<h3>Infrastructure</h3>
+<h4>2026-03-11 &mdash; Issue #11</h4>
+<ul>
+<li><strong>infra(#11): CI/CD pipeline</strong> &mdash; Automated deployment via GitHub Actions
+  <ul>
+    <li>Dev deploys on push to <code>_dev</code> &rarr; dev.turtles.wastelandwares.com</li>
+    <li>Prod deploys on push to <code>main</code> &rarr; turtles.wastelandwares.com</li>
+    <li>Vite build + rsync over SSH</li>
+    <li>2 workflow files added</li>
+  </ul>
+</li>
+</ul>
+
 <h3>Sprint 1 &mdash; The Scaffolding</h3>
 <h4>2026-03-08 &mdash; Session 1: Prototype</h4>
 <ul>
